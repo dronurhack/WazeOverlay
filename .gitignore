@@ -1,0 +1,11 @@
+# Default ignored files
+/local.properties
+/.idea
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.iml
+.gradle
+/build
+/app/build
