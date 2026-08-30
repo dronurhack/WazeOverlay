@@ -60,8 +60,12 @@ public class OverlayService extends Service {
             String title    = intent.getStringExtra(EXTRA_TITLE);
             String text     = intent.getStringExtra(EXTRA_TEXT);
             String category = intent.getStringExtra(EXTRA_CATEGORY);
-            PendingIntent stillThereIntent = intent.getParcelableExtra(EXTRA_STILL_THERE);
-            PendingIntent goneIntent       = intent.getParcelableExtra(EXTRA_GONE);
+            PendingIntent stillThereIntent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    ? intent.getParcelableExtra(EXTRA_STILL_THERE, PendingIntent.class)
+                    : (PendingIntent) intent.getParcelableExtra(EXTRA_STILL_THERE);
+            PendingIntent goneIntent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    ? intent.getParcelableExtra(EXTRA_GONE, PendingIntent.class)
+                    : (PendingIntent) intent.getParcelableExtra(EXTRA_GONE);
 
             showOverlay(emoji, title, text, category, stillThereIntent, goneIntent);
             vibrate(category);
