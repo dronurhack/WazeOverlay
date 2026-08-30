@@ -3,7 +3,10 @@ name: Build WazeOverlay APK
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
   workflow_dispatch:
+
 
 permissions:
   contents: write
