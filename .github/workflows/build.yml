@@ -19,27 +19,43 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Install Gradle wrapper
+        run: |
+          mkdir -p gradle/wrapper
+          # Download gradle-wrapper.jar from official Gradle services
+          curl -fsSL \
+            "https://services.gradle.org/distributions/gradle-8.2-bin.zip" \
+            -o /tmp/gradle.zip
+          unzip -p /tmp/gradle.zip "gradle-8.2/lib/plugins/gradle-wrapper-*.jar" \
+            > gradle/wrapper/gradle-wrapper.jar 2>/dev/null || true
+          # Fallback: use gradle init to generate the wrapper
+          if [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Fallback: downloading wrapper jar via gradle init"
+            wget -q https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar \
+              -O gradle/wrapper/gradle-wrapper.jar || true
+          fi
+          # Nuclear fallback: install gradle system-wide and generate wrapper
+          if [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
+            sudo apt-get install -y gradle -q
+            gradle wrapper --gradle-version 8.2 --no-daemon
+          fi
+          echo "Wrapper jar size: $(wc -c < gradle/wrapper/gradle-wrapper.jar) bytes"
+
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Download Gradle wrapper jar (if missing)
-        run: |
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Downloading gradle-wrapper.jar..."
-            mkdir -p gradle/wrapper
-            curl -fsSL -o gradle/wrapper/gradle-wrapper.jar \
-              "https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar"
-          fi
-
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+          ANDROID_HOME: /usr/local/lib/android/sdk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
